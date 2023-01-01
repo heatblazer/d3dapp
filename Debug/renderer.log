@@ -1,0 +1,5 @@
+﻿  renderer.cpp
+C:\Users\ilian\source\repos\renderer\renderer.cpp(10,5): warning C4007: 'WinMain': must be '__stdcall'
+MSVCRTD.lib(exe_main.obj) : error LNK2019: unresolved external symbol _main referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
+C:\Users\ilian\source\repos\renderer\glfw\lib-vc2019\glfw3.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\ilian\source\repos\renderer\Debug\renderer.exe : fatal error LNK1120: 1 unresolved externals

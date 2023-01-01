@@ -1,0 +1,4 @@
+﻿  Render.cpp
+C:\Users\ilian\source\repos\renderer\Render.h(4,1): warning C4005: 'UNICODE': macro redefinition
+C:\Users\ilian\source\repos\renderer\Render.cpp : message : see previous definition of 'UNICODE'
+  renderer.vcxproj -> C:\Users\ilian\source\repos\renderer\x64\Debug\renderer.exe
