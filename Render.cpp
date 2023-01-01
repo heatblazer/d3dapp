@@ -7,11 +7,16 @@
 static const wchar_t ClassName[] = L"MyWindowClass";
 
 
+struct Vertex
+{
+	float position[3];
+	float color[3];
+};
 
+Vertex dbgTriangle[3] = { {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+							  {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+							  {{0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}} };
 
-static float dbgtriangle[] = { -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-								-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-								0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f };
 
 static int dbgidx[] = { 0, 1, 2,
 						 0, 2, 3 };
@@ -52,7 +57,7 @@ bool Renderer::CreateVBO()
 	// Set up the description of the static vertex buffer.
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(dbgtriangle); //p_Mesh->Vertices();
+	vertexBufferDesc.ByteWidth = sizeof(dbgTriangle); //p_Mesh->Vertices();
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.CPUAccessFlags = 0;
 	vertexBufferDesc.MiscFlags = 0;
@@ -60,7 +65,7 @@ bool Renderer::CreateVBO()
 
 	// Give the subresource structure a pointer to the vertex data.
 	D3D11_SUBRESOURCE_DATA vertexData;
-	vertexData.pSysMem = dbgtriangle;
+	vertexData.pSysMem = dbgTriangle;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
@@ -278,40 +283,20 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 
 	if (FAILED(hr)) {
-		if (!m_win32.Device)
-			return false;
-		if (!m_win32.Context)
-			return false;
-		if (!m_win32.SwapChain)
-			return false;
-
 		MessageBeep(1);
 		MessageBoxA(0, "Error creating device and swapchain! [Failed]", "Fatal Error", MB_OK | MB_ICONERROR);
 		return GetLastError();
 	}
 
-
-
-
 	ZeroMemory(&m_win32.viewport, sizeof(D3D11_VIEWPORT));
-
 	m_win32.viewport.TopLeftX = 0;
 	m_win32.viewport.TopLeftY = 0;
-	m_win32.viewport.Width = (float)client.right - client.left;
-	m_win32.viewport.Height = (float)client.bottom - client.top;
+	m_win32.viewport.Width = (float)1024;
+	m_win32.viewport.Height = (float)768;
 	m_win32.viewport.MinDepth = 0.0f;
 	m_win32.viewport.MaxDepth = 1.0f;
 
 	m_win32.Context->RSSetViewports(1, &m_win32.viewport);
-
-
-
-	// * * * * * RENDER TARGET SETUP * * * * * //
-	
-
-	// ⚗️ Define the Graphics Pipeline
-
-	// 🔣 Input Assembly
 
 	if (!CreateRenderTarget())
 		return false;
@@ -424,9 +409,9 @@ void Renderer::updateCBuffers(float rot, float transform)
 void Renderer::Draw()
 {
 	static bool vsync = false;
-	UINT stride = sizeof(float) * 6;
+	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	float color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
 	
 
 	// Bind the render target view and depth stencil buffer to the output render
@@ -465,8 +450,8 @@ void Renderer::Draw()
 
 	// Render the triangle.
 	m_win32.Context->DrawIndexed(3, 0, 0);
-	
-	m_win32.SwapChain->Present(0, 0);
+
+	m_win32.SwapChain->Present(1, 0);
 
 }
 
