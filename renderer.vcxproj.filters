@@ -60,5 +60,6 @@
   <ItemGroup>
     <FxCompile Include="vs.hlsl" />
     <FxCompile Include="ps.hlsl" />
+    <FxCompile Include="shaders.hlsl" />
   </ItemGroup>
 </Project>

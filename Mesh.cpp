@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include <cmath>
 
 void Mesh::Load(const char* fname)
 {
@@ -22,8 +23,8 @@ void Mesh::Load(const char* fname)
 			m_data.m_verts.PushBack((float)ilian::alphatof(t[0].data()));
 			m_data.m_verts.PushBack((float)ilian::alphatof(t[1].data()));
 			m_data.m_verts.PushBack((float)ilian::alphatof(t[2].data()));
-			m_data.m_verts.PushBack(0.0f);
-			m_data.m_verts.PushBack(0.0f);
+			m_data.m_verts.PushBack(1.0f);
+			m_data.m_verts.PushBack(1.0f);
 			m_data.m_verts.PushBack(1.0f);
 
 		}

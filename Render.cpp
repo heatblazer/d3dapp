@@ -7,15 +7,9 @@
 static const wchar_t ClassName[] = L"MyWindowClass";
 
 
-struct Vertex
-{
-	float position[3];
-	float color[3];
-};
-
-Vertex dbgTriangle[3] = { {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-							  {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-							  {{0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}} };
+float dbgTriangle[] = {1.0f, 1.0f, 0.0f,
+						-1.0f, 1.0f, 0.0f, 
+					     0.0f, -1.0f, 0.0f};
 
 
 static int dbgidx[] = { 0, 1, 2,
@@ -55,25 +49,20 @@ bool Renderer::CreateVBO()
 {
 
 	// Set up the description of the static vertex buffer.
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(dbgTriangle); //p_Mesh->Vertices();
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-	vertexBufferDesc.StructureByteStride = 0;
-
-	// Give the subresource structure a pointer to the vertex data.
-	D3D11_SUBRESOURCE_DATA vertexData;
-	vertexData.pSysMem = dbgTriangle;
-	vertexData.SysMemPitch = 0;
-	vertexData.SysMemSlicePitch = 0;
-
-	// Now create the vertex buffer.
-	HRESULT hr = m_win32.Device->CreateBuffer(&vertexBufferDesc, &vertexData,
+	D3D11_BUFFER_DESC vertex_buff_descr = {};
+	vertex_buff_descr.ByteWidth = sizeof(dbgTriangle);
+	vertex_buff_descr.Usage = D3D11_USAGE_DEFAULT ;
+	vertex_buff_descr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA sr_data = { 0 };
+	sr_data.pSysMem = dbgTriangle;
+	HRESULT hr = m_win32.Device->CreateBuffer(
+		&vertex_buff_descr,
+		&sr_data,
 		&m_bufferData.pVertexBuffer);
+
+
 	if (hr != S_OK)
-		return false;
+		return false; 
 
 	return true;
 }
@@ -84,7 +73,7 @@ bool Renderer::CreateIBO()
 	// Set up the description of the static index buffer.
 	D3D11_BUFFER_DESC indexBufferDesc;
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(dbgidx);
+	indexBufferDesc.ByteWidth = p_Mesh->Edges();
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
@@ -92,7 +81,7 @@ bool Renderer::CreateIBO()
 
 	// Give the subresource structure a pointer to the index data.
 	D3D11_SUBRESOURCE_DATA indexData;
-	indexData.pSysMem = dbgidx;//p_Mesh->edata();
+	indexData.pSysMem = p_Mesh->edata();
 	indexData.SysMemPitch = 0;
 	indexData.SysMemSlicePitch = 0;
 
@@ -107,8 +96,8 @@ bool Renderer::CreateIBO()
 
 bool Renderer::InitShaders()
 {
-	HRESULT hr = D3DCompileFromFile(L"vs.hlsl", nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0", NULL, NULL, &m_bufferData.pVertexShaderBlob, &m_bufferData.pErrorBlob);
+	HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", NULL, NULL, &m_bufferData.pVertexShaderBlob, &m_bufferData.pErrorBlob);
 	if (FAILED(hr)) {
 		if (m_bufferData.pErrorBlob) {
 			OutputDebugStringA((char*)m_bufferData.pErrorBlob->GetBufferPointer());
@@ -121,7 +110,7 @@ bool Renderer::InitShaders()
 		return false;
 	}
 
-	hr = D3DCompileFromFile(L"ps.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
+	hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0",
 		NULL, NULL, &m_bufferData.pPixelShaderBlob, &m_bufferData.pErrorBlob);
 	if (FAILED(hr)) {
 		if (m_bufferData.pErrorBlob) {
@@ -147,58 +136,27 @@ bool Renderer::InitShaders()
 	return true; 
 }
 
-bool Renderer::InitScene()
-{
-
-	return true;
-}
 
 
 bool Renderer::CreateRenderTarget()
 {
 
 	// Get the back buffer texture.
-	HRESULT hr = m_win32.SwapChain->GetBuffer(0, IID_PPV_ARGS(&m_bufferData.backbufferTex));
-	// Create the render target view with the back buffer pointer.
+
+
+	HRESULT hr = m_win32.SwapChain->GetBuffer(
+		0,
+		__uuidof(ID3D11Texture2D),
+		(void**)&m_bufferData.framebuffer);
 	if (hr != S_OK)
 		return false;
-	
-	hr = m_win32.Device->CreateRenderTargetView(m_bufferData.backbufferTex, NULL,
+
+	hr = m_win32.Device->CreateRenderTargetView(m_bufferData.framebuffer, NULL,
 		&m_win32.renderTargetView);
 
 	if (hr != S_OK)
-		return false;
-
-	// Create the texture for the depth buffer.
-	D3D11_TEXTURE2D_DESC depthBufferDesc;
-	ZeroMemory(&depthBufferDesc, sizeof(depthBufferDesc));
-	depthBufferDesc.Width = 1024;
-	depthBufferDesc.Height = 768;
-	depthBufferDesc.MipLevels = 1;
-	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthBufferDesc.SampleDesc.Count = 1;
-	depthBufferDesc.SampleDesc.Quality = 0;
-	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthBufferDesc.CPUAccessFlags = 0;
-	depthBufferDesc.MiscFlags = 0;
-	hr = m_win32.Device->CreateTexture2D(&depthBufferDesc, NULL,
-		&m_win32.pDepthStencilBuffer);
-
-	if (hr != S_OK)
 		return false; 
-	// Create the depth stencil view.
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
-	ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	depthStencilViewDesc.Texture2D.MipSlice = 0;
-	hr = m_win32.Device->CreateDepthStencilView(m_win32.pDepthStencilBuffer,
-		&depthStencilViewDesc,
-		&m_win32.pDepthStencilView);
-	if (hr != S_OK)
-		return false;
+	// Create the depth stencil view.	
 
 	return true;
 }
@@ -273,14 +231,22 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	D3D_FEATURE_LEVEL_9_1 };
 
 	D3D_FEATURE_LEVEL featureLevelOutputs = D3D_FEATURE_LEVEL_11_1;
-	HRESULT hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, 0,
+	D3D_FEATURE_LEVEL feature_level;
+
+	HRESULT hr = D3D11CreateDeviceAndSwapChain(
+		NULL,
+		D3D_DRIVER_TYPE_HARDWARE,
+		NULL,
 		D3D11_CREATE_DEVICE_SINGLETHREADED |
 		D3D11_CREATE_DEVICE_DEBUG,
-		featureLevelInputs, 7u, D3D11_SDK_VERSION,
-		&m_win32.Device, &featureLevelOutputs, &m_win32.Context);
-
-	hr = factory->CreateSwapChain(m_win32.Device, &swapchain_Desc, &m_win32.SwapChain);
-
+		NULL,
+		0,
+		D3D11_SDK_VERSION,
+		&swapchain_Desc,
+		&m_win32.SwapChain,
+		&m_win32.Device,
+		&feature_level,
+		&m_win32.Context);
 
 	if (FAILED(hr)) {
 		MessageBeep(1);
@@ -288,45 +254,27 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		return GetLastError();
 	}
 
-	ZeroMemory(&m_win32.viewport, sizeof(D3D11_VIEWPORT));
-	m_win32.viewport.TopLeftX = 0;
-	m_win32.viewport.TopLeftY = 0;
-	m_win32.viewport.Width = (float)1024;
-	m_win32.viewport.Height = (float)768;
-	m_win32.viewport.MinDepth = 0.0f;
-	m_win32.viewport.MaxDepth = 1.0f;
-
-	m_win32.Context->RSSetViewports(1, &m_win32.viewport);
-
 	if (!CreateRenderTarget())
 		return false;
-
-	D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
-
-	polygonLayout[0].SemanticName = "POSITION";
-	polygonLayout[0].SemanticIndex = 0;
-	polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	polygonLayout[0].InputSlot = 0;
-	polygonLayout[0].AlignedByteOffset = 0;
-	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[0].InstanceDataStepRate = 0;
-
-	polygonLayout[1].SemanticName = "COLOR";
-	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	polygonLayout[1].InputSlot = 0;
-	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[1].InstanceDataStepRate = 0;
-
-	// Get a count of the elements in the layout.
-	unsigned numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
-
+	
 	if (!InitShaders())
 		return false;
 
+
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  /*
+  { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  */
+	};
+
+	// Get a count of the elements in the layout.
+	unsigned numElements = sizeof(inputElementDesc) / sizeof(inputElementDesc[0]);
+
 	// Create the vertex input layout.
-	hr = m_win32.Device->CreateInputLayout(polygonLayout, numElements,
+	hr = m_win32.Device->CreateInputLayout(inputElementDesc, numElements,
 		m_bufferData.pVertexShaderBlob->GetBufferPointer(),
 		m_bufferData.pVertexShaderBlob->GetBufferSize(),
 		&m_win32.InputLayout);
@@ -334,123 +282,46 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	if (hr != S_OK)
 		return false;
 
-	// depth stencil
-	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
-	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-	depthStencilDesc.DepthEnable = true;
-	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.StencilEnable = true;
-	depthStencilDesc.StencilReadMask = 0xFF;
-	depthStencilDesc.StencilWriteMask = 0xFF;
-	// Stencil operations if pixel is front-facing.
-	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-	depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	// Stencil operations if pixel is back-facing.
-	depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-	depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-	// Create the depth stencil state.
-	hr = m_win32.Device->CreateDepthStencilState(&depthStencilDesc,
-		&m_win32.pDepthStencilState);
-
-	if (hr != S_OK)
+	if (!CreateVBO())
 		return false;
-
-	// Set the depth stencil state.
-	m_win32.Context->OMSetDepthStencilState(m_win32.pDepthStencilState, 1);
-
-	// 🟨 Rasterization
-	D3D11_RASTERIZER_DESC rasterDesc;
-	rasterDesc.AntialiasedLineEnable = false;
-	rasterDesc.CullMode = D3D11_CULL_NONE;
-	rasterDesc.DepthBias = 0;
-	rasterDesc.DepthBiasClamp = 0.0f;
-	rasterDesc.DepthClipEnable = true;
-	rasterDesc.FillMode = D3D11_FILL_SOLID;
-	rasterDesc.FrontCounterClockwise = false;
-	rasterDesc.MultisampleEnable = false;
-	rasterDesc.ScissorEnable = false;
-	rasterDesc.SlopeScaledDepthBias = 0.0f;
-
-	// Create the rasterizer state from the description we just filled out.
-	hr = m_win32.Device->CreateRasterizerState(&rasterDesc, &m_win32.pRasterizerState);
-
-	if (hr != S_OK)
-		return false;
-
-	// Now set the rasterizer state.
-	m_win32.Context->RSSetState(m_win32.pRasterizerState);
-
+	
 	return true; 
 }
 
-void Renderer::Clear(float r, float g, float b, float a)
-{
-	float c[4] = { r, g, b, a };
-	m_win32.SwapChain->Present(1, 0);
-
-	m_win32.Context->ClearRenderTargetView(m_win32.renderTargetView, c);
-	// Clear Depth/Stencil view
-   m_win32.Context->ClearDepthStencilView(m_win32.pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-}
-
-
-void Renderer::updateCBuffers(float rot, float transform)
-{
-
-}
 
 void Renderer::Draw()
 {
 	static bool vsync = false;
-	UINT stride = sizeof(Vertex);
+	UINT stride = sizeof(float) * 3;
 	UINT offset = 0;
-	float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	
+	float color[] = { 0.0f, 0.3f, 0.3f, 1.0f };
 
-	// Bind the render target view and depth stencil buffer to the output render
-   // pipeline.
-	m_win32.Context->OMSetRenderTargets(0, &m_win32.renderTargetView, m_win32.pDepthStencilView);
+	RECT winRect;
+	GetClientRect(m_win32.Window, &winRect);
+	D3D11_VIEWPORT viewport = {
+				  0.0f,
+				  0.0f,
+				  (FLOAT)(winRect.right - winRect.left),
+				  (FLOAT)(winRect.bottom - winRect.top),
+				  0.0f,
+				  1.0f };
 
-	m_win32.Context->RSSetViewports(1, &m_win32.viewport);
 
-	// Clear textures
+	m_win32.Context->RSSetViewports(1, &viewport);
+
 	m_win32.Context->ClearRenderTargetView(m_win32.renderTargetView, color);
 
-	// Clear the depth buffer.
-	m_win32.Context->ClearDepthStencilView(m_win32.pDepthStencilView, D3D11_CLEAR_DEPTH,
-		1.0f, 0);
-
-	// Set the vertex input layout.
+	m_win32.Context->OMSetRenderTargets(1, &m_win32.renderTargetView, NULL);
+	m_win32.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_win32.Context->IASetInputLayout(m_win32.InputLayout);
-
-	// Set the vertex and pixel shaders that will be used to render this
-	// triangle.
+	m_win32.Context->IASetVertexBuffers(0, 1, &m_bufferData.pVertexBuffer, &stride, &offset);
 	m_win32.Context->VSSetShader(m_shaders.pVertexShader, NULL, 0);
 	m_win32.Context->PSSetShader(m_shaders.pPixelShader, NULL, 0);
 
-	// Set the vertex buffer to active in the input assembler so it can be
-	// rendered.
-	m_win32.Context->IASetVertexBuffers(0, 1, &m_bufferData.pVertexBuffer, &stride, &offset);
+	/*** draw the vertex buffer with the shaders ****/
+	m_win32.Context->Draw(3, 0);
 
-	// Set the index buffer to active in the input assembler so it can be
-	// rendered.
-	m_win32.Context->IASetIndexBuffer(m_bufferData.pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	// Set the type of primitive that should be rendered from this vertex
-	// buffer, in this case triangles.
-	m_win32.Context->IASetPrimitiveTopology(
-		D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Render the triangle.
-	m_win32.Context->DrawIndexed(3, 0, 0);
-
+	/**** swap the back and front buffers (show the frame we just drew) ****/
 	m_win32.SwapChain->Present(1, 0);
 
 }
@@ -460,9 +331,6 @@ void Renderer::Exec()
 {
 
 	bool Running = true;
-
-	CreateVBO();
-	CreateIBO();
 	while (Running) {
 		MSG Message;
 		while (PeekMessage(&Message, nullptr, 0, 0, PM_REMOVE)) {

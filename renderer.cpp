@@ -18,8 +18,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     rend.UploadMesh(m);
 
     if (rend.Init(hInstance, hPrevInstance, lpCmdLine, nCmdShow))
-    {
-                
+    {                
         rend.Exec();
     }
     else {

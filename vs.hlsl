@@ -1,31 +1,16 @@
-cbuffer cb : register(b0)
-{
-    row_major float4x4 projectionMatrix : packoffset(c0);
-    row_major float4x4 modelMatrix : packoffset(c4);
-    row_major float4x4 viewMatrix : packoffset(c8);
+
+/* vertex attributes go here to input to the vertex shader */
+struct vs_in {
+    float3 position_local : POS;
 };
 
-struct VertexInput
-{
-    float3 inPos : POSITION;
-    float3 inColor : COLOR;
+/* outputs from vertex shader go here. can be interpolated to pixel shader */
+struct vs_out {
+    float4 position_clip : SV_POSITION; // required output of VS
 };
 
-struct VertexOutput
-{
-    float3 color : COLOR;
-    float4 position : SV_Position;
-};
-
-VertexOutput main(VertexInput vertexInput)
-{
-    float3 inColor = vertexInput.inColor;
-    float3 inPos = vertexInput.inPos;
-    float3 outColor = inColor;
-    float4 position = mul(float4(inPos, 1.0), mul(modelMatrix, mul(viewMatrix, projectionMatrix)));
-
-    VertexOutput output;
-    output.position = position;
-    output.color = outColor;
+vs_out vs_main(vs_in input) {
+    vs_out output = (vs_out)0; // zero the memory first
+    output.position_clip = float4(input.position_local, 1.0);
     return output;
 }

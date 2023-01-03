@@ -53,12 +53,10 @@ class Renderer
 		HWND Window;
 		ID3D11Device* Device;
 		ID3D11DeviceContext* Context;
-		DXGI_SWAP_CHAIN_DESC SwapChainDesc;
 		IDXGISwapChain* SwapChain;
 		IDXGIDevice2* DxgiDevice;
 		IDXGIAdapter* DxgiAdapter;
 		IDXGIFactory2* DxgiFactory;
-		ID3D11Texture2D* FrameBuffer;
 		ID3D11RenderTargetView* FrameBufferView;
 		ID3D11InputLayout* InputLayout;
 		//redner target
@@ -89,7 +87,7 @@ class Renderer
 		ID3D11Buffer* pIndexBuffer;
 		ID3D11Buffer* pCBuffer;
 		ID3D11Buffer* pCBufferLight;
-		ID3D11Texture2D* backbufferTex;
+		ID3D11Texture2D* framebuffer;
 	} m_bufferData;
 
 	struct {
@@ -111,20 +109,15 @@ public:
 
 	void UploadMesh(const Mesh& mesh);
 
-
 	bool Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow);
-
-	bool InitScene();
-
+	
 	bool InitShaders(); 
 	
 	bool CreateRenderTarget();
-
+	
 	bool CreateVBO();
 
 	bool CreateIBO();
-
-	void Clear(float r, float g, float b, float a);
 
 	void Draw();
 

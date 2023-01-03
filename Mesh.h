@@ -4,18 +4,6 @@
 #include "utils.h"
 #include "Vector.h"
 #include "String.h"
-#include <cmath>
-#include <DirectXMath.h>
-// create a class 
-
-// able to load (read) the file - present
-
-// convert the data to floating points - present 
-
-// put it to a vector  Vector<double>  - present
-
-//viki 
-
 
 class Mesh
 {

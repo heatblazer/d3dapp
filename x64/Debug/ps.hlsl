@@ -1,17 +1,14 @@
-struct PixelInput
-{
-    float3 color : COLOR;
+
+/* vertex attributes go here to input to the vertex shader */
+struct vs_in {
+    float3 position_local : POS;
 };
 
-struct PixelOutput
-{
-    float4 attachment0 : SV_Target0;
+/* outputs from vertex shader go here. can be interpolated to pixel shader */
+struct vs_out {
+    float4 position_clip : SV_POSITION; // required output of VS
 };
 
-PixelOutput main(PixelInput pixelInput)
-{
-    float3 inColor = pixelInput.color;
-    PixelOutput output;
-    output.attachment0 = float4(inColor, 1.0f);
-    return output;
+float4 ps_main(vs_out input) : SV_TARGET{
+  return float4(1.0, 0.0, 1.0, 1.0); // must return an RGBA colour
 }
