@@ -11,7 +11,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 #else
     Mesh m;
-    m.Load("C:\\Users\\ilian\\Desktop\\TST.off");
+    m.Load("C:\\Users\\ilian\\Desktop\\CSG.off");
     m.Normalize();
             
     Renderer rend;

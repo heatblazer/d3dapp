@@ -6,10 +6,13 @@
 #pragma comment (lib, "d3d11.lib")
 static const wchar_t ClassName[] = L"MyWindowClass";
 
+#define APPWIDTH 1024
+#define APPHEIGHT 768
 
-float dbgTriangle[] = {1.0f, 1.0f, 0.0f,
-						-1.0f, 1.0f, 0.0f, 
-					     0.0f, -1.0f, 0.0f};
+
+float dbgTriangle[] = { 0.0f,  0.5f,  0.0f, // point at top
+   0.5f, -0.5f,  0.0f, // point at bottom-right
+  -0.5f, -0.5f,  0.0f};
 
 
 static int dbgidx[] = { 0, 1, 2,
@@ -50,16 +53,15 @@ bool Renderer::CreateVBO()
 
 	// Set up the description of the static vertex buffer.
 	D3D11_BUFFER_DESC vertex_buff_descr = {};
-	vertex_buff_descr.ByteWidth = sizeof(dbgTriangle);
+	vertex_buff_descr.ByteWidth = p_Mesh->Vertices() * sizeof(float); // sizeof(dbgTriangle);
 	vertex_buff_descr.Usage = D3D11_USAGE_DEFAULT ;
 	vertex_buff_descr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	D3D11_SUBRESOURCE_DATA sr_data = { 0 };
-	sr_data.pSysMem = dbgTriangle;
+	sr_data.pSysMem = p_Mesh->norms();
 	HRESULT hr = m_win32.Device->CreateBuffer(
 		&vertex_buff_descr,
 		&sr_data,
 		&m_bufferData.pVertexBuffer);
-
 
 	if (hr != S_OK)
 		return false; 
@@ -184,7 +186,7 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	// * * * size of the client area * * * //
-	RECT client = { 0, 0, 1024, 768};
+	RECT client = { 0, 0, APPWIDTH, APPHEIGHT};
 	
 	m_win32.Window = CreateWindowEx(NULL,
 		ClassName,
@@ -192,8 +194,8 @@ bool Renderer::Init(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		WS_OVERLAPPEDWINDOW,    // WS_OVERLAPPEDWINDOW : standard features
 		CW_USEDEFAULT,          // CW_USEDEFAULT:
 		CW_USEDEFAULT,          //          standard position of new window 
-		1024,
-		768,
+		APPWIDTH,
+		APPHEIGHT,
 		NULL,
 		NULL,
 		hInstance,
@@ -303,14 +305,12 @@ void Renderer::Draw()
 				  0.0f,
 				  (FLOAT)(winRect.right - winRect.left),
 				  (FLOAT)(winRect.bottom - winRect.top),
-				  0.0f,
+				  1.0f,
 				  1.0f };
 
 
 	m_win32.Context->RSSetViewports(1, &viewport);
-
 	m_win32.Context->ClearRenderTargetView(m_win32.renderTargetView, color);
-
 	m_win32.Context->OMSetRenderTargets(1, &m_win32.renderTargetView, NULL);
 	m_win32.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_win32.Context->IASetInputLayout(m_win32.InputLayout);
@@ -319,10 +319,10 @@ void Renderer::Draw()
 	m_win32.Context->PSSetShader(m_shaders.pPixelShader, NULL, 0);
 
 	/*** draw the vertex buffer with the shaders ****/
-	m_win32.Context->Draw(3, 0);
+	m_win32.Context->Draw(p_Mesh->Vertices()/ 3, 0);
+	m_win32.SwapChain->Present(1, 0);
 
 	/**** swap the back and front buffers (show the frame we just drew) ****/
-	m_win32.SwapChain->Present(1, 0);
 
 }
 
