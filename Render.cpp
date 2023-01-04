@@ -98,7 +98,7 @@ bool Renderer::CreateIBO()
 
 bool Renderer::InitShaders()
 {
-	HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr,
+	HRESULT hr = D3DCompileFromFile(L"vs.hlsl", nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", NULL, NULL, &m_bufferData.pVertexShaderBlob, &m_bufferData.pErrorBlob);
 	if (FAILED(hr)) {
 		if (m_bufferData.pErrorBlob) {
@@ -112,7 +112,7 @@ bool Renderer::InitShaders()
 		return false;
 	}
 
-	hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0",
+	hr = D3DCompileFromFile(L"ps.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0",
 		NULL, NULL, &m_bufferData.pPixelShaderBlob, &m_bufferData.pErrorBlob);
 	if (FAILED(hr)) {
 		if (m_bufferData.pErrorBlob) {
@@ -301,12 +301,12 @@ void Renderer::Draw()
 	RECT winRect;
 	GetClientRect(m_win32.Window, &winRect);
 	D3D11_VIEWPORT viewport = {
-				  0.0f,
-				  0.0f,
-				  (FLOAT)(winRect.right - winRect.left),
-				  (FLOAT)(winRect.bottom - winRect.top),
-				  1.0f,
-				  1.0f };
+				0.0f,
+				0.0f,
+				(FLOAT)(winRect.right - winRect.left),
+				(FLOAT)(winRect.bottom - winRect.top),
+				0.0f,
+				1.0f };
 
 
 	m_win32.Context->RSSetViewports(1, &viewport);

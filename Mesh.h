@@ -35,5 +35,9 @@ public:
 	float* vdata() { return m_data.m_verts.data();  }
 
 	int* edata() { return m_data.m_edges.data();  }
+
+	void scale(float x, float y, float z);
+
+
 };
 

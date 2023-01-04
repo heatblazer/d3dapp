@@ -33,19 +33,28 @@ void Mesh::Load(const char* fname)
 	}	
 }
 
+
+void Mesh::scale(float x, float y, float z)
+{
+	float mat[16] = { x, 0.0f, 0.0f,
+					0.0f, y, 0.0f,
+					0.0f, 0.0f, z };
+
+	
+}
+
 void Mesh::Normalize()
 {
 	float p = 0.0f;
+
 	for (int i = 0; i < m_data.m_verts.Count(); i++)
 	{
 		p += m_data.m_verts[i] * m_data.m_verts[i];
 	}
 
 	p = ::sqrt(p);
-
 	for (int i = 0; i < m_data.m_verts.Count(); i++)
 	{
 		m_data.m_norms.PushBack(m_data.m_verts[i] / p);
 	}
-
 }

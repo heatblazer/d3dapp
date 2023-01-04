@@ -12,6 +12,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 #else
     Mesh m;
     m.Load("C:\\Users\\ilian\\Desktop\\CSG.off");
+    m.scale(100.0f, 100.0f, 100.0f);
     m.Normalize();
             
     Renderer rend;
